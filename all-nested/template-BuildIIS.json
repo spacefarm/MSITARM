@@ -60,7 +60,7 @@
     },
   "variables": {
 
-    "branch": "develop",
+     "branch": "beta",
     "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
 
     "IISDeployzip": "Deploy-WebServer.ps1.zip",

@@ -270,7 +270,7 @@
     "apiVersion": "2015-06-15",
     "MSITVersion": "2.1.1",
 
-    "branch": "develop",
+     "branch": "beta",
     "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
     "nestedURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-nested/')]",
 

@@ -381,7 +381,7 @@
   "variables": {
     "apiVersion": "2015-01-01",
 
-    "branch": "develop",
+     "branch": "beta",
     "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
     "nestedURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-nested/')]",
 
