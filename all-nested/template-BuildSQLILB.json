@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VM to apply the DSC configuration to"
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "Description": "Number of Azure VM to create."
+      }
+    },
+    "DomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name Domain"
+      }
+    },
+    "AOAGListenerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the Listener."
+      }
+    },
+    "AOAGName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the AvailabilityGroup."
+      }
+    },
+    "FailoverClusterName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the FailoverCluster."
+      }
+    },
+    "LoadBalancerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "FSWName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "maxLength": 15,
+      "metadata": {
+        "description": "The servername for the File Share Witness. exmample: thisServer-sql-1"
+      }
+    },
+    "FSWDriveLetter": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "maxLength": 2,
+      "metadata": {
+        "description": "the Drive letter to use to create the FSW share. the Share name will be derived from the data provided: Example: D"
+      }
+    },
+    "WebHookKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of webhook, used to launch Runbook."
+      }
+    },
+    "DashboardSvr": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of dashboard, used internally for debugging."
+      }
+    }
+  },
+  "variables": {
+
+    "branch": "develop",
+    "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
+
+    "vmILBExtensionName": "ConfigureILB",
+    "customILBScriptFileToRun": "Configure-ILB.ps1",
+    "customILBScriptFileUri": "[concat(variables('scriptsURL'),variables('customILBScriptFileToRun'))]",
+    "ILBarguments": "[concat(' -AOAGListenerName ', parameters('AOAGListenerName'),' -LoadBalancerName ',parameters('LoadBalancerName'), ' -FSWName ', parameters('FSWName'), ' -FSWDriveLetter ', parameters('FSWDriveLetter'), ' -AOAGName ', parameters('AOAGName'), ' -ServernamePart ', parameters('vmname'), ' -InstanceCount ', parameters('numberOfInstances'),' -Domain ', parameters('DomainName'), ' -FailoverClusterName ', parameters('FailoverClusterName'), ' -SubscriptionId ',subscription().subscriptionId,' -WebHookKey ', parameters('WebHookKey'), ' -DashboardSvr ',parameters('DashboardSvr'))]",
+    "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(parameters('vmName'),'1','/', variables('vmILBExtensionName'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": "true",
+        "forceUpdateTag": "v.1.4",
+        "settings": {
+          "fileUris": [
+            "[variables('customILBScriptFileUri')]"
+          ]          
+        },
+        "protectedSettings": {
+          "commandToExecute": "[variables('ILBcommandToExecute')]"
+        }
+      }
+    }
+  ]
+}
+

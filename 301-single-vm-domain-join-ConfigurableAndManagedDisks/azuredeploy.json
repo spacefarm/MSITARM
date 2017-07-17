@@ -1,0 +1,580 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "localAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Username for the Virtual Machine."
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Password for the Virtual Machine."
+      }
+    },
+    "domainJoinUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Account for domain joining, ex. Domain\\serviceaccount"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLServerAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "SQL Server Service runas account.  Example: domain\\serviceaccount"
+      }
+    },
+    "SQLServerPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "The password of the account to use for running the SQL Agent Service."
+      }
+    },
+    "SQLAgentAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Account to use for Running the SQL Agent Service.  Example: Domain\\serviceaccount"
+      }
+    },
+    "SQLAgentPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password to use for Running the SQL Agent Service."
+      }
+    },
+    "SQLAdmins": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL SYS admins that can login to the Default SQL Instance installed on the VM. "
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "metadata": {
+        "description": "local admins that can login to the VMs. csv list of domain\\user,domain\\group "
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS4_v2",
+      "metadata": {
+        "description": "Size for the Virtual Machine. Details: https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-sizes?toc=%2fazure%2fvirtual-machines%2flinux%2ftoc.json#standard-tier-d-series"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftSQLServer",
+      "allowedValues": [
+        "MicrosoftSQLServer"
+      ],
+      "metadata": {
+        "description": "OS Image Publisher. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-cli-ps-findimage/"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "SQL2012SP3-WS2012R2",
+      "allowedValues": [
+        "SQL2012SP3-WS2012R2",
+        "SQL2014SP2-WS2012R2",
+        "SQL2014-WS2012R2",
+        "SQL2016-WS2012R2",
+        "SQL2016SP1-WS2016"
+      ],
+      "metadata": {
+        "description": "Allowed Windows values: WindowsServer. Allowed SQL Values: SQL2012SP2-WS2012R2,SQL2014-WS2012R2, SQL2014SP1-WS2012R2, SQL2016CTP3-WS2012R2, SQL2016CTP3.1-WS2012R2, SQL2016CTP3.2-WS2012R2, SQL2016RC3-WS2012R2v2."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Enterprise",
+      "allowedValues": [
+        "Enterprise",
+        "Web",
+        "Standard",
+        "Express"
+      ],
+      "metadata": {
+        "description": "See Azure for available ImageSKU for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRmVMImageSku</a></p> Example: <p>Enterprise, Standard, Web, Express.<p>"
+      }
+    },
+    "H_DriveSize": {
+      "type": "int",
+      "minValue": 10,
+      "maxValue": 4096,
+      "metadata": {
+        "description": "The size in GB for the H drive from 10GB to 4096GB"
+      }
+    },
+    "H_DriveCache": {
+      "type": "string",
+      "defaultValue": "ReadOnly",
+      "allowedValues": [
+        "ReadOnly",
+        "ReadWrite",
+        "None"
+      ],
+      "metadata": {
+        "description": "Details: https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage"
+      }
+    },
+    "O_DriveSize": {
+      "type": "int",
+      "minValue": 10,
+      "maxValue": 4096,
+      "metadata": {
+        "description": "The size in GB for the O drive from 10GB to 4096GB"
+      }
+    },
+    "O_DriveCache": {
+      "type": "string",
+      "defaultValue": "ReadOnly",
+      "allowedValues": [
+        "ReadOnly",
+        "ReadWrite",
+        "None"
+      ],
+      "metadata": {
+        "description": "Details: https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage"
+      }
+    },
+    "T_DriveSize": {
+      "type": "int",
+      "minValue": 10,
+      "maxValue": 4096,
+      "metadata": {
+        "description": "The size in GB for the T drive from 10GB to 4096GB"
+      }
+    },
+    "T_DriveCache": {
+      "type": "string",
+      "defaultValue": "ReadOnly",
+      "allowedValues": [
+        "ReadOnly",
+        "ReadWrite",
+        "None"
+      ],
+      "metadata": {
+        "description": "Details: https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage"
+      }
+    },
+    "E_DriveSize": {
+      "type": "int",
+      "minValue": 10,
+      "maxValue": 4096,
+      "metadata": {
+        "description": "The size in GB for the E drive from 10GB to 4096GB"
+      }
+    },
+    "E_DriveCache": {
+      "type": "string",
+      "defaultValue": "ReadOnly",
+      "allowedValues": [
+        "ReadOnly",
+        "ReadWrite",
+        "None"
+      ],
+      "metadata": {
+        "description": "Details: https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The FQDN of the AD domain"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "CiOwner": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiOwner tag for the Virtual Machine. use your Alias, Domain\\[Alias]"
+      }
+    },
+    "CiAnalystGroup": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiAnalystGroup tag for the Virtual Machine. Please contact your Cloud Lead if you don't know this value.  Format: Config Analyst: Org1 - Org2 -Org3 - Org4"
+      }
+    },
+    "appID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "Test",
+        "UAT",
+        "Lab",
+        "SvcCont",
+        "Pre-Production",
+        "Production"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the VirtualNetwork"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "defaultValue": "ERNetwork",
+      "allowedValues": [
+        "ERNetwork",
+        "ERNetwork-DMZ"
+      ],
+      "metadata": {
+        "description": "Name for the Resource Group that contains VirtualNetwork."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1",
+      "metadata": {
+        "description": "Name for the subnet"
+      }
+    },
+    "PullServerRegistrationKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The key for the Pull server the VM will join"
+      }
+    },
+    "PullServerRegistrationURI": {
+      "type": "string",
+      "metadata": {
+        "description": "The pull server URI"
+      }
+    },
+    "FederalWorkspaceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Federal Workspace ID to join"
+      }
+    },
+    "FederalWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Federal Workspace key to use to join"
+      }
+    },
+    "UserWorkspaceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The City Workspace ID to join"
+      }
+    },
+    "UserWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The City Workspace key to use to join"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-01-01",
+
+    "branch": "develop",
+    "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
+    "nestedURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-nested/')]",
+
+    "createVMtemplate": "template-SingleVM-Conf-MD.json",
+    "configurePullTemplate": "template-ConfigureDscPull.json",
+    
+    "federalWorkspaceID": "0f00ef94-f80f-4165-81d6-f417b8000a15",
+    "federalWorkspaceKey": "ilCAWpSyoSUHDtvbfXoYyMRo+j9Mn/TSIaN+wgjy7BvPJCsmDb38zebOQx0qVkn1o8ZhPCApqfAzZsUCKVqTVw==",
+
+    "Role": "SQL",
+
+    "CreateVMUrl": "[concat(variables('nestedURL'),variables('createVMtemplate'))]",
+    "AttachVMtoPullServerURL": "[concat(variables('nestedURL'),variables('configurePullTemplate'))]",
+
+    "BuildMachineRoleURL": "[concat(variables('nestedURL'),'template-Build',variables('Role'),'-FixedDisks', '.json')]",
+
+    "AzureAutomation": {
+      "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+      "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+      "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+      "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
+      "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+      "timestamp": "1/1/2015"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'-CreateVM')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('CreateVMUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "localAdminUserName": {
+            "value": "[parameters('localAdminUserName')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
+          },
+          "domainJoinUserName": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('domainJoinPassword')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "H_DriveSize": {
+            "value": "[parameters('H_DriveSize')]"
+          },
+          "H_DriveCache": {
+            "value": "[parameters('H_DriveCache')]"
+          },
+          "O_DriveSize": {
+            "value": "[parameters('O_DriveSize')]"
+          },
+          "O_DriveCache": {
+            "value": "[parameters('O_DriveCache')]"
+          },
+          "T_DriveSize": {
+            "value": "[parameters('T_DriveSize')]"
+          },
+          "T_DriveCache": {
+            "value": "[parameters('T_DriveCache')]"
+          },
+          "E_DriveSize": {
+            "value": "[parameters('E_DriveSize')]"
+          },
+          "E_DriveCache": {
+            "value": "[parameters('E_DriveCache')]"
+          },
+          "numberOfInstances": {
+            "value": 1
+          },
+          "imagePublisher": {
+            "value": "[parameters('imagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[parameters('imageOffer')]"
+          },
+          "sku": {
+            "value": "[parameters('sku')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "CiOwner": {
+            "value": "[parameters('CiOwner')]"
+          },
+          "CiAnalystGroup": {
+            "value": "[parameters('CiAnalystGroup')]"
+          },
+          "appID": {
+            "value": "[parameters('appID')]"
+          },
+          "orgID": {
+            "value": "[parameters('orgID')]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "SQLAdmins": {
+            "value": "[parameters('SQLAdmins')]"
+          },
+          "virtualNetwork": {
+            "value": "[parameters('virtualNetwork')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('vnetResourceGroup')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "ouPath": {
+            "value": "[parameters('ouPath')]"
+          },
+          "FederalWorkspaceID": {
+            "value": "[parameters('federalWorkspaceID')]"
+          },
+          "federalWorkspaceKey": {
+            "value": "[parameters('federalWorkspaceKey')]"
+          },
+          "UserWorkspaceID": {
+            "value": "[parameters('UserWorkspaceID')]"
+          },
+          "UserWorkspaceKey": {
+            "value": "[parameters('UserWorkspaceKey')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'-BuildMachineRole-',variables('Role'))]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('BuildMachineRoleURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "H_DriveSize": {
+            "value": "[parameters('H_DriveSize')]"
+          },
+          "H_DriveCache": {
+            "value": "[parameters('H_DriveCache')]"
+          },
+          "O_DriveSize": {
+            "value": "[parameters('O_DriveSize')]"
+          },
+          "O_DriveCache": {
+            "value": "[parameters('O_DriveCache')]"
+          },
+          "T_DriveSize": {
+            "value": "[parameters('T_DriveSize')]"
+          },
+          "T_DriveCache": {
+            "value": "[parameters('T_DriveCache')]"
+          },
+          "E_DriveSize": {
+            "value": "[parameters('E_DriveSize')]"
+          },
+          "E_DriveCache": {
+            "value": "[parameters('E_DriveCache')]"
+          },
+          "SQLServerAccount": {
+            "value": "[parameters('SQLServerAccount')]"
+          },
+          "SQLServerPassword": {
+            "value": "[parameters('SQLServerPassword')]"
+          },
+          "SQLAgentAccount": {
+            "value": "[parameters('SQLAgentAccount')]"
+          },
+          "SQLAgentPassword": {
+            "value": "[parameters('SQLAgentPassword')]"
+          },
+          "SQLAdmin": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "SQLAdminPwd": {
+            "value": "[parameters('domainJoinPassword')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-CreateVM')]"
+      ]
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'-AttachVMtoPullServer')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('AttachVMtoPullServerURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+
+          "RegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+          "registrationUrl": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
+          },
+          "nodeConfigurationName": {
+            "value": "[variables('AzureAutomation').nodeConfigurationName]"
+          },
+          "timestamp": {
+            "value": "[variables('AzureAutomation').timestamp]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'-BuildMachineRole-',variables('Role'))]"
+      ]
+    }
+  ]
+}

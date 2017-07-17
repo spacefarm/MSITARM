@@ -1,0 +1,144 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": ""
+    },
+    "localAdminUserName": {
+      "value": ""
+    },
+    "AvailabilitySet": {
+      "value": ""
+    },
+    "loadBalancerName": {
+      "value": ""
+    },
+    "AOAGListenerName": {
+      "value": ""
+    },
+    "AOAGName": {
+      "value": ""
+    },
+    "FailoverClusterName": {
+      "value": ""
+    },
+    "FSWName": {
+      "value": ""
+    },
+    "FSWDriveLetter": {
+      "value": ""
+    },
+    "localAdminPassword": {
+      "value": ""
+    },
+    "domainJoinUserName": {
+      "value": ""
+    },
+    "domainJoinPassword": {
+      "value": ""
+    },
+    "SQLServerAccount": {
+      "value": ""
+    },
+    "SQLServerPassword": {
+      "value": ""
+    },
+    "SQLAgentAccount": {
+      "value": ""
+    },
+    "SQLAgentPassword": {
+      "value": ""
+    },
+    "localAdmins": {
+      "value": ""
+    },
+    "SQLAdmins": {
+      "value": ""
+    },
+    "CiOwner": {
+      "value": ""
+    },
+    "CiAnalystGroup": {
+      "value": ""
+    },
+    "appID": {
+      "value": ""
+    },
+    "domainName": {
+      "value": ""
+    },
+    "OUPath": {
+      "value": ""
+    },
+    "env": {
+      "value": ""
+    },
+    "orgID": {
+      "value": ""
+    },
+    "imagePublisher": {
+      "value": ""
+    },
+    "imageOffer": {
+      "value": ""
+    },
+    "sku": {
+      "value": ""
+    },
+    "storageAccountType": {
+      "value": "Premium_LRS"
+    },
+    "virtualNetwork": {
+      "value": ""
+    },
+    "vnetResourceGroup": {
+      "value": ""
+    },
+    "subnetName": {
+      "value": "Subnet-1"
+    },
+    "vmSize": {
+      "value": ""
+    },
+    "numberOfInstances": {
+      "value": 2
+    },
+    "H_DriveSize": {
+      "value": 200
+    },
+    "H_DriveCache": {
+      "value": "none"
+    },
+    "O_DriveSize": {
+      "value": 200
+    },
+    "O_DriveCache": {
+      "value": "none"
+    },
+    "T_DriveSize": {
+      "value": 400
+    },
+    "T_DriveCache": {
+      "value": "none"
+    },
+    "E_DriveSize": {
+      "value": 500
+    },
+    "E_DriveCache": {
+      "value": "none"
+    },
+    "UserWorkspaceID": {
+      "value": ""
+    },
+    "UserWorkspaceKey": {
+      "value": ""
+    },
+    "federalWorkspaceID": {
+      "value": ""
+    },
+    "federalWorkspaceKey": {
+      "value": ""
+    }
+  }
+}
