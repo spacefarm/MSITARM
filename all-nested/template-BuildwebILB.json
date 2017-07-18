@@ -1,0 +1,96 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VM to apply the DSC configuration to"
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "Description": "Number of Azure VM to create."
+      }
+    },
+    "DomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name Domain"
+      }
+    },
+    "DeploymentName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "WebILBName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "SQLILBName": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Optional Name for the LoadBalancer."
+      }
+    },
+    "WebHookKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The ILB Runbook ResourceGroup"
+      }
+    },
+    "Dashboardsvr": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The Dashboard svr"
+      }
+    }
+  },
+  "variables": {
+
+    "branch": "develop",
+    "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
+
+    "vmILBExtensionName": "ConfigureWebILB",
+    "customILBScriptFileToRun": "Configure-WebILB.ps1",
+    "customILBScriptFileUri": "[concat(variables('scriptsURL'),variables('customILBScriptFileToRun'))]",
+    "ILBarguments": "[concat(' -DeploymentName ', parameters('DeploymentName'), ' -SubscriptionId ',subscription().subscriptionId, ' -servernamepart ', parameters('vmName'), ' -domain ', parameters('DomainName'), ' -InstanceCount ', parameters('numberOfInstances'),' -SQLILBName ', parameters('SQLILBName'), ' -WebILBName ', parameters('WebILBName'), ' -WebHookKey ', parameters('WebHookKey'), ' -Dashboardsvr ', parameters('Dashboardsvr'))]",
+    "ILBcommandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', variables('customILBScriptFileToRun'), ' ', variables('ILBarguments'))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(parameters('vmName'),'1','/', variables('vmILBExtensionName'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": "true",
+        "forceUpdateTag": "v.1.4",
+        "settings": {
+          "fileUris": [
+            "[variables('customILBScriptFileUri')]"
+          ]          
+        },
+        "protectedSettings": {
+          "commandToExecute": "[variables('ILBcommandToExecute')]"
+        }
+      }
+    }
+  ]
+}
+
