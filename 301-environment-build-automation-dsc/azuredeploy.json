@@ -1,0 +1,530 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 6,
+      "metadata": {
+        "description": "Name for the Virtual Machine. Name will be iterated for each VM starting at 1 adding the machine Role (IE IIS or SQL)."
+      }
+    },
+    "AvailabilitySet": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the AvailabilitySet."
+      }
+    },
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "AOAGListenerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "maxLength": 15,
+      "metadata": {
+        "description": "Name for the Listener."
+      }
+    },
+    "AOAGName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "maxLength": 20,
+      "metadata": {
+        "description": "Name for the Availability Group."
+      }
+    },
+    "FailoverClusterName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "maxLength": 10,
+      "metadata": {
+        "description": "First 10 char for the netbios name of the FailoverCluster."
+      }
+    },
+    "localAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Username for the Virtual Machine."
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Password for the Virtual Machine."
+      }
+    },
+    "domainJoinUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Account for domain joining. Example: Domain\\serviceaccount"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "SQLServerAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "SQL Server Service runas account.  Example: Domain\\serviceaccount"
+      }
+    },
+    "SQLServerPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password Account to use for Running the SQL Server Service."
+      }
+    },
+    "SQLAgentAccount": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Account to use for Running the SQL Agent Service.  Example: Domain\\serviceaccount"
+      }
+    },
+    "SQLAgentPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for account to use for Running the SQL Agent Service."
+      }
+    },
+    "numberOfIIS": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of IIS VMs to deploy"
+      }
+    },
+    "numberOfSQL": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of SQL VMs to deploy, max 2"
+      }
+    },
+    "userImageStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify an existing storage account where the VM image(s) will be created, example: mystorageaccount"
+      }
+    },
+    "StorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS"
+      ],
+      "metadata": {
+        "description": "Storage performance, Standard_LRS for standard skus and Premium_LRS for premium skus"
+      }
+    },
+    "Domain": {
+      "type": "string",
+      "defaultValue": "YourDomain",
+      "metadata": {
+        "description": "The FQDN of the AD domain."
+      }
+    },
+    "CiOwner": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiOwner tag for the Virtual Machine. Example: Domain\\youralias"
+      }
+    },
+    "CiAnalystGroup": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiAnalystGroup tag for the Virtual Machine. "
+      }
+    },
+    "appID": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "Test",
+        "UAT",
+        "Lab",
+        "SvcCont",
+        "Pre-Production",
+        "Production"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "metadata": {
+        "description": "Users and groups added to the local administrator group. "
+      }
+    },
+    "SQLAdmins": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL SYS admins that can login to the Default SQL Instance installed on the VM."
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the VirtualNetwork"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "defaultValue": "ERNetwork",
+      "metadata": {
+        "description": "Name for the Resource Group that contains VirtualNetwork."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1",
+      "metadata": {
+        "description": "Name for the subnet"
+      }
+    },
+    "PullServerRegistrationKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The key for the Pull server the VM will join"
+      }
+    },
+    "PullServerRegistrationURI": {
+      "type": "string",
+      "metadata": {
+        "description": "The pull server URI"
+      }
+    }
+  },
+  "variables": {
+
+    "branch": "develop",
+    "SQLfolder": "/301-multi-vm-domain-join-SQLILB-build-dsc/",
+    "IISfolder": "/301-multi-vm-domain-join-WebILB-build-dsc/",
+    "SQLbaseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('SQLfolder'))]",
+    "IISbaseURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),variables('IISfolder'))]",
+
+    "CreateSQLUrl": "[concat(variables('SQLBaseURL'), 'azuredeploy.json')]",
+    "CreateIISUrl": "[concat(variables('IISBaseURL'), 'azuredeploy.json')]",
+
+    "IIS": {
+      "imagePublisher": "MicrosoftWindowsServer",
+      "imageOffer": "WindowsServer",
+      "sku": "2012-R2-Datacenter",
+      "DiskConfig": "IIS",
+      "Role": "IIS",
+      "vmSize": "Standard_A4",
+      "diskCount": "1",
+      "diskSize": 200
+    },
+    "SQL": {
+      "imagePublisher": "MicrosoftSQLServer",
+      "imageOffer": "SQL2014SP2-WS2012R2",
+      "sku": "Enterprise",
+      "DiskConfig": "SQLStd",
+      "Role": "SQL",
+      "vmSize": "Standard_D4_V2",
+      "diskCount": "3",
+      "diskSize": 500
+    },
+    "AzureAutomation": {
+      "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+      "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+      "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+      "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
+      "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+      "timestamp": "1/1/2015"
+    },
+    "YourDomain": {
+      "FQDN": "YourDomain.com",
+      "OUPath": "YourOUPath"
+    },
+    "DomainData": "[variables(parameters('domain'))]"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'-CreateIISsvr')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('CreateIISUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "AvailabilitySet": {
+            "value": "[concat(parameters('AvailabilitySet'),variables('IIS').Role)]"
+          },
+          "loadBalancerName": {
+            "value": "[concat(parameters('loadBalancerName'),variables('IIS').Role)]"
+          },
+          "localAdminUserName": {
+            "value": "[parameters('localAdminUserName')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
+          },
+          "domainJoinUserName": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('domainJoinPassword')]"
+          },
+          "vmName": {
+            "value": "[concat(parameters('vmName'),variables('IIS').Role,'')]"
+          },
+          "DiskConfig": {
+            "value": "[variables('IIS').DiskConfig]"
+          },
+          "vmSize": {
+            "value": "[variables('IIS').vmSize]"
+          },
+          "DiskCount": {
+            "value": "[variables('IIS').DiskCount]"
+          },
+          "DiskSize": {
+            "value": "[variables('IIS').DiskSize]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfIIS')]"
+          },
+          "imagePublisher": {
+            "value": "[variables('IIS').imagePublisher]"
+          },
+          "imageOffer": {
+            "value": "[variables('IIS').imageOffer]"
+          },
+          "sku": {
+            "value": "[variables('IIS').sku]"
+          },
+          "userImageStorageAccountName": {
+            "value": "[parameters('userImageStorageAccountName')]"
+          },
+          "StorageAccountType": {
+            "value": "[parameters('StorageAccountType')]"
+          },
+          "domainName": {
+            "value": "[variables('DomainData').FQDN]"
+          },
+          "ouPath": {
+            "value": "[variables('DomainData').ouPath]"
+          },
+          "CiOwner": {
+            "value": "[parameters('CiOwner')]"
+          },
+          "CiAnalystGroup": {
+            "value": "[parameters('CiAnalystGroup')]"
+          },
+          "appID": {
+            "value": "[parameters('appID')]"
+          },
+          "orgID": {
+            "value": "[parameters('orgID')]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "SQLAdmins": {
+            "value": ""
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "virtualNetwork": {
+            "value": "[parameters('virtualNetwork')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('vnetResourceGroup')]"
+          },
+          "PullServerRegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+          "PullServerRegistrationURI": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'-CreateSQLsvr')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('CreateSQLUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "localAdminUserName": {
+            "value": "[parameters('localAdminUserName')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
+          },
+          "domainJoinUserName": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('domainJoinPassword')]"
+          },
+          "vmName": {
+            "value": "[concat(parameters('vmName'),variables('SQL').Role,'')]"
+          },
+          "AvailabilitySet": {
+            "value": "[concat(parameters('AvailabilitySet'),variables('SQL').Role)]"
+          },
+          "loadBalancerName": {
+            "value": "[concat(parameters('loadBalancerName'),variables('SQL').Role)]"
+          },
+          "AOAGListenerName": {
+            "value": "[parameters('AOAGListenerName')]"
+          },
+          "AOAGName": {
+            "value": "[parameters('AOAGName')]"
+          },
+          "FailoverClusterName": {
+            "value": "[parameters('FailoverClusterName')]"
+          },
+          "SQLServerAccount": {
+            "value": "[parameters('SQLServerAccount')]"
+          },
+          "SQLServerPassword": {
+            "value": "[parameters('SQLServerPassword')]"
+          },
+          "SQLAgentAccount": {
+            "value": "[parameters('SQLAgentAccount')]"
+          },
+          "SQLAgentPassword": {
+            "value": "[parameters('SQLAgentPassword')]"
+          },
+          "DiskConfig": {
+            "value": "[variables('SQL').DiskConfig]"
+          },
+          "vmSize": {
+            "value": "[variables('SQL').vmSize]"
+          },
+          "DiskCount": {
+            "value": "[variables('SQL').DiskCount]"
+          },
+          "DiskSize": {
+            "value": "[variables('SQL').DiskSize]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfSQL')]"
+          },
+          "imagePublisher": {
+            "value": "[variables('SQL').imagePublisher]"
+          },
+          "imageOffer": {
+            "value": "[variables('SQL').imageOffer]"
+          },
+          "sku": {
+            "value": "[variables('SQL').sku]"
+          },
+          "userImageStorageAccountName": {
+            "value": "[parameters('userImageStorageAccountName')]"
+          },
+          "StorageAccountType": {
+            "value": "[parameters('StorageAccountType')]"
+          },
+          "domainName": {
+            "value": "[variables('DomainData').FQDN]"
+          },
+          "ouPath": {
+            "value": "[variables('DomainData').ouPath]"
+          },
+          "CiOwner": {
+            "value": "[parameters('CiOwner')]"
+          },
+          "CiAnalystGroup": {
+            "value": "[parameters('CiAnalystGroup')]"
+          },
+          "appID": {
+            "value": "[parameters('appID')]"
+          },
+          "orgID": {
+            "value": "[parameters('orgID')]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "SQLAdmins": {
+            "value": "[parameters('SQLAdmins')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "virtualNetwork": {
+            "value": "[parameters('virtualNetwork')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('vnetResourceGroup')]"
+          },
+          "PullServerRegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+          "PullServerRegistrationURI": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
+          }
+        }
+      }
+    }
+
+  ]
+}

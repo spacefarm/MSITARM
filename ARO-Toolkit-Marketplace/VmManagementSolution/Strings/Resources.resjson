@@ -1,0 +1,21 @@
+{
+  "displayName": "Start/Stop VMs during off-hours 1.0.11",
+  "publisherDisplayName": "Microsoft",
+  "summary": "Automate time consuming and frequently repeated tasks in the cloud and on-premises.",
+  "description": "<p>The Start/Stop VMs during off-hours solution starts and stops your Azure Virtual Machines on a schedule or by utilization. Save money by making sure VMs are off when not being used.</p>
+<p>The Start/Stop VMs during off-hours solution relies on two Azure services and a SendGrid service:</p>
+<ul>
+<li><strong>Automation</strong>: starts and stops your virtual machines on a schedule</li>
+<li><strong>Log Analytics</strong>: visualizes the successful start and stop of your machines.</li>
+<li><strong>SendGrid: </strong>sends email notifications of stop and start activities</li>
+</ul>
+<p>You will be charged based on the pricing of the three services above. Azure customers receive up to 25,000 free emails per month from SendGrid.&nbsp; Note that the logs for all runbooks jobs in the selected Automation account will be sent to Log Analytics as part of this solution.&nbsp;</p>
+<p><strong>If you use this solution, it will only use automation job minutes and log ingestion. That is, this solution does not add additional OMS nodes to your environment.</strong></p>",
+  "linkDisplayName0": "Azure Automation",
+  "linkDisplayName1": "Log Analytics",
+  "linkDisplayName2": "Send Azure log to Log Analytics",
+  "linkDisplayName3": "Automation pricing",
+  "linkDisplayName4": "Log Analytics pricing",
+  "linkDisplayName5": "SendGrid usage and pricing",
+  "linkDisplayName6": "Documentation"
+}

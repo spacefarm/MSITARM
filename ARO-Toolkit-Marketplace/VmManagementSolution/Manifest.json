@@ -1,0 +1,68 @@
+{
+    "$schema": "https://gallery.azure.com/schemas/2014-09-01/manifest.json#",
+    "name": "StartStopVMSolution",
+    "publisher": "Microsoft",
+    "version": "1.0.11",
+    "displayName": "ms-resource:displayName",
+    "publisherDisplayName": "ms-resource:publisherDisplayName",
+    "publisherLegalName": "ms-resource:publisherDisplayName",
+    "summary": "ms-resource:summary",
+    "longSummary": "ms-resource:summary",
+    "description": "ms-resource:description",
+    "uiDefinition": {
+        "path": "UIDefinition.json"
+    },
+    "artifacts": [
+        {
+            "name": "newSolutionTemplate",
+            "type": "Template",
+            "path": "DeploymentTemplates\\newSolutionTemplate.json",
+            "isDefault": true
+        }
+    ],
+    "icons": {
+        "small": "Icons\\Small.png",
+        "medium": "Icons\\Medium.png",
+        "wide": "Icons\\Wide.png",
+        "large": "Icons\\Large.png",
+        "hero": "Icons\\Hero.png"
+    },
+    "links": [
+        {
+            "displayName": "ms-resource:linkDisplayName0",
+            "uri": "https://azure.microsoft.com/en-us/services/automation/"
+        },
+        {
+            "displayName": "ms-resource:linkDisplayName1",
+            "uri": "https://www.microsoft.com/en-us/server-cloud/solutions/log-analytics.aspx"
+        },
+        {
+            "displayName": "ms-resource:linkDisplayName2",
+            "uri": "https://azure.microsoft.com/en-us/documentation/articles/log-analytics-azure-storage/"
+        },
+        {
+            "displayName": "ms-resource:linkDisplayName3",
+            "uri": "https://azure.microsoft.com/en-us/pricing/details/automation/"
+        },
+        {
+            "displayName": "ms-resource:linkDisplayName4",
+            "uri": "https://azure.microsoft.com/en-us/pricing/details/log-analytics/"
+        },
+        {
+            "displayName": "ms-resource:linkDisplayName5",
+            "uri": "https://docs.microsoft.com/en-us/azure/app-service-web/sendgrid-dotnet-how-to-send-email/"
+        },
+        {
+            "displayName": "ms-resource:linkDisplayName6",
+            "uri": "https://azure.microsoft.com/en-us/documentation/articles/automation-solution-vm-management/"
+        }
+    ],
+    "screenshots": [
+    ],
+    "categories": [
+        "mgmt",
+        "businessApplication",
+        "analytics",
+        "msOmsSolutions"
+    ]
+}

@@ -1,0 +1,120 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": ""
+    },
+    "AvailabilitySet": {
+      "value": ""
+    },
+    "loadBalancerName": {
+      "value": ""
+    },
+    "localAdminUserName": {
+      "value": ""
+    },
+    "localAdminPassword": {
+      "value": ""
+    },
+    "domainJoinUserName": {
+      "value": ""
+    },
+    "domainJoinPassword": {
+      "value": ""
+    },
+    "localAdmins": {
+      "value": ""
+    },
+    "vmSize": {
+      "value": "Standard_A2"
+    },
+    "imagePublisher": {
+      "value": ""
+    },
+    "imageOffer": {
+      "value": ""
+    },
+    "sku": {
+      "value": ""
+    },
+    "DiskConfig": {
+      "value": "IIS"
+    },
+    "DiskCount": {
+      "value": "1"
+    },
+    "DiskSize": {
+      "value": 200
+    },
+    "storageAccountType": {
+      "value": ""
+    },
+    "domainName": {
+      "value": ""
+    },
+    "OUPath": {
+      "value": ""
+    },
+    "CiOwner": {
+      "value": ""
+    },
+    "CiAnalystGroup": {
+      "value": ""
+    },
+    "appID": {
+      "value": ""
+    },
+    "orgID": {
+      "value": ""
+    },
+    "env": {
+      "value": ""
+    },
+    "virtualNetwork": {
+      "value": ""
+    },
+    "vnetResourceGroup": {
+      "value": ""
+    },
+    "numberOfInstances": {
+      "value": 2
+    },
+    "subnetName": {
+      "value": "Subnet-1"
+    },
+    "PullServerRegistrationKey": {
+      "value": ""
+    },
+    "PullServerRegistrationURI": {
+      "value": ""
+    },
+    "webILBUriKey": {
+      "value": ""
+    },
+    "ILBSubId": {
+      "value": ""
+    },
+    "ILBResourceGroup": {
+      "value": ""
+    },
+    "ILBAccount": {
+      "value": ""
+    },
+    "DashboardURL": {
+      "value": ""
+    },
+    "UserWorkspaceID": {
+      "value": ""
+    },
+    "UserWorkspaceKey": {
+      "value": ""
+    },
+    "federalWorkspaceID": {
+      "value": ""
+    },
+    "federalWorkspaceKey": {
+      "value": ""
+    }
+  }
+}

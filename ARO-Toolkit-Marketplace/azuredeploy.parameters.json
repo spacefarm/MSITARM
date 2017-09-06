@@ -1,0 +1,45 @@
+﻿{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "bootStrapExecuteGuid": {
+            "value": ""
+        },
+		"startRunbookScheduleJobGuidValue" :{
+		      "value": ""
+		},
+		"stopRunbookScheduleJobGuidValue" : {
+		     "value": ""
+		},
+		"bootStrapGuid": {
+            "value": ""
+        },
+        "workspaceName": {
+            "value": ""
+        },
+        "accountName": {
+            "value": ""
+        },
+		"workspaceRegionId": {
+            "value": "East US"
+        },
+		"regionId": {
+            "value": "East US 2"
+        },
+        "pricingTier" : {
+	        "value" : "OMS"
+		},
+		"Daily Start Time" : {
+		   "value" : ""
+		},
+		"Daily Stop Time" : {
+		   "value" : ""
+		},
+        "sendgridPassword": {
+		  "value": ""
+		},
+		"Email Addresses": {
+		    "value":""
+		}
+    }
+}

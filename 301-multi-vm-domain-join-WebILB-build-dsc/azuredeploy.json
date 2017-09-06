@@ -1,0 +1,562 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "maxLength": 13,
+      "metadata": {
+        "description": "Name for the Virtual Machine. Name will be iterated for each VM starting at 1."
+      }
+    },
+    "AvailabilitySet": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the AvailabilitySet."
+      }
+    },
+    "loadBalancerName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the LoadBalancer."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "Description": "Number of Azure VM to create."
+      }
+    },
+    "localAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Username for the Virtual Machine."
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Password for the Virtual Machine."
+      }
+    },
+    "domainJoinUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Account for domain joining. Example: Domain\\serviceaccount"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Users and groups added to the local administrator group."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D3_v2",
+      "metadata": {
+        "description": "Size for the Virtual Machine. Details: https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-linux-sizes?toc=%2fazure%2fvirtual-machines%2flinux%2ftoc.json#standard-tier-d-series"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftWindowsServer",
+      "allowedValues": [
+        "MicrosoftWindowsServer"
+      ],
+      "metadata": {
+        "description": "See Azure for available ImagePublisher for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRMVMImagePublisher</a></p> Example: <p>MicrosoftSQLServer or MicrosoftWindowsServer</p>"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "WindowsServer",
+      "allowedValues": [
+        "WindowsServer"
+      ],
+      "metadata": {
+        "description": "See ImagePublisher link for more details."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2012-R2-Datacenter",
+        "2016-Datacenter"
+      ],
+      "metadata": {
+        "description": "See Azure for available ImageSKU for your Location. Sample Code: <p><a target=new href=https://msitwiki/get-imagepublisher-imageoffer-imagesku-for-arm-templates/>Get-AzureRmVMImageSku</a></p> Example: <p>Enterprise, Standard, Web, Express.<p>"
+      }
+    },
+    "DiskConfig": {
+      "type": "string",
+      "defaultValue": "IIS",
+      "allowedValues": [
+        "Win",
+        "IIS"
+      ],
+      "metadata": {
+        "description": "Used to control the diskconfiguration which includes the intiial drive letters used."
+      }
+    },
+    "DiskCount": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16"
+      ],
+      "defaultValue": "3",
+      "metadata": {
+        "description": "Number of Data Disks to be attached to vm."
+      }
+    },
+    "DiskSize": {
+      "type": "int",
+      "defaultValue": 32,
+      "minValue": 10,
+      "maxValue": 4096,
+      "metadata": {
+        "Description": "Size of Data Disk(s) attached to the VM in GB, Min of 10 and Max of 4096"
+      }
+    },
+    "userImageStorageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify an existing storage account where the VM image(s) will be created, example: mystorage"
+      }
+    },
+    "StorageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage performance, Standard_LRS for standard skus and Premium_LRS for premium skus"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The FQDN of the AD domain"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "CiOwner": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiOwner tag for the Virtual Machine. Example: Domain\\youralias"
+      }
+    },
+    "CiAnalystGroup": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiAnalystGroup tag for the Virtual Machine. "
+      }
+    },
+    "appID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "Test",
+        "UAT",
+        "Lab",
+        "SvcCont",
+        "Pre-Production",
+        "Production"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the VirtualNetwork"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "defaultValue": "ERNetwork",
+      "metadata": {
+        "description": "Name for the Resource Group that contains VirtualNetwork."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "Subnet-1",
+      "metadata": {
+        "description": "Name for the subnet"
+      }
+    },
+    "PullServerRegistrationKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The key for the Pull server the VM will join"
+      }
+    },
+    "PullServerRegistrationURI": {
+      "type": "string",
+      "metadata": {
+        "description": "The pull server URI"
+      }
+    },
+    "WebHookKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Key of webhook, used to launch Runbook."
+      }
+    },
+    "DashboardSvr": {
+      "type": "string",
+      "metadata": {
+        "description": "Server of dashboard, used internally for debugging."
+      }
+    },
+    "FederalWorkspaceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Federal Workspace ID to join"
+      }
+    },
+    "FederalWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Federal Workspace key to use to join"
+      }
+    },
+    "UserWorkspaceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The City Workspace ID to join"
+      }
+    },
+    "UserWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The City Workspace key to use to join"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-01-01",
+
+    "branch": "develop",
+    "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
+    "nestedURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-nested/')]",
+
+    "createVMtemplate": "template-MultipleVM-webilb.json",
+    "configurePullTemplate": "template-ConfigureDscPull.json",
+    "Role": "[substring(parameters('DiskConfig'),0,3)]",
+
+    "CreateVMUrl": "[concat(variables('nestedURL'),variables('createVMtemplate'))]",
+    "AttachVMtoPullServerURL": "[concat(variables('nestedURL'),variables('configurePullTemplate'))]",
+
+    "BuildMachineRoleURL": "[concat(variables('nestedURL'),'template-Build',variables('Role'), '.json')]",
+
+    "BuildwebILBCluster": "[concat(variables('nestedURL'),'template-BuildwebILB.json')]",
+
+    "AzureAutomation": {
+      "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+      "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+      "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+      "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
+      "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+      "timestamp": "1/1/2015"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'-CreateVM')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('CreateVMUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "localAdminUserName": {
+            "value": "[parameters('localAdminUserName')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
+          },
+          "domainJoinUserName": {
+            "value": "[parameters('domainJoinUserName')]"
+          },
+          "domainJoinPassword": {
+            "value": "[parameters('domainJoinPassword')]"
+          },
+          "localAdmins": {
+            "value": "[parameters('localAdmins')]"
+          },
+          "SQLAdmins": {
+            "value": ""
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "AvailabilitySet": {
+            "value": "[parameters('AvailabilitySet')]"
+          },
+          "loadBalancerName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "DiskConfig": {
+            "value": "[parameters('DiskConfig')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "DiskCount": {
+            "value": "[parameters('DiskCount')]"
+          },
+          "DiskSize": {
+            "value": "[parameters('DiskSize')]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfInstances')]"
+          },
+          "imagePublisher": {
+            "value": "[parameters('imagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[parameters('imageOffer')]"
+          },
+          "sku": {
+            "value": "[parameters('sku')]"
+          },
+          "userImageStorageAccountName": {
+            "value": "[parameters('userImageStorageAccountName')]"
+          },
+          "StorageAccountType": {
+            "value": "[parameters('StorageAccountType')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "CiOwner": {
+            "value": "[parameters('CiOwner')]"
+          },
+          "CiAnalystGroup": {
+            "value": "[parameters('CiAnalystGroup')]"
+          },
+          "appID": {
+            "value": "[parameters('appID')]"
+          },
+          "orgID": {
+            "value": "[parameters('orgID')]"
+          },
+          "env": {
+            "value": "[parameters('env')]"
+          },
+          "virtualNetwork": {
+            "value": "[parameters('virtualNetwork')]"
+          },
+          "vnetResourceGroup": {
+            "value": "[parameters('vnetResourceGroup')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "ouPath": {
+            "value": "[parameters('OUPath')]"
+          },
+          "FederalWorkspaceID": {
+            "value": "[parameters('FederalWorkspaceID')]"
+          },
+          "federalWorkspaceKey": {
+            "value": "[parameters('FederalWorkspaceKey')]"
+          },
+          "UserWorkspaceID": {
+            "value": "[parameters('UserWorkspaceID')]"
+          },
+          "UserWorkspaceKey": {
+            "value": "[parameters('UserWorkspaceKey')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "BuildMachineRoleLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('BuildMachineRoleURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[concat(parameters('vmName'),copyindex(1))]"
+          },
+          "DiskConfig": {
+            "value": "[parameters('DiskConfig')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "DiskCount": {
+            "value": "[parameters('DiskCount')]"
+          },
+          "DiskSize": {
+            "value": "[parameters('DiskSize')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-CreateVM')]"
+      ]
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),copyindex(1),'-AttachVMtoPullServer')]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "AttachVMtoPullServerLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('AttachVMtoPullServerURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[concat(parameters('vmName'),copyindex(1))]"
+          },
+          "RegistrationKey": {
+            "value": "[variables('AzureAutomation').RegistrationKey]"
+          },
+          "registrationUrl": {
+            "value": "[variables('AzureAutomation').registrationUrl]"
+          },
+          "nodeConfigurationName": {
+            "value": "[variables('AzureAutomation').nodeConfigurationName]"
+          },
+          "timestamp": {
+            "value": "[variables('AzureAutomation').timestamp]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]"
+      ]
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat(parameters('vmName'),'1','-BuildWebILBConfiguration')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('BuildWebILBCluster')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "DeploymentName": {
+            "value": "[deployment().name]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "numberOfInstances": {
+            "value": "[parameters('numberOfInstances')]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "WebILBName": {
+            "value": "[parameters('loadBalancerName')]"
+          },
+          "SQLILBName": {
+            "value": "none"
+          },
+          "WebHookKey": {
+            "value": "[parameters('WebHookKey')]"
+          },
+          "Dashboardsvr": {
+            "value": "[parameters('Dashboardsvr')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/',parameters('vmName'),'1','-AttachVMtoPullServer')]"
+      ]
+    }
+  ]
+}

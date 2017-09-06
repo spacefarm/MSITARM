@@ -1,0 +1,928 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "A valid Log Analytics workspace name"
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "A valid Azure Automation account name"
+      }
+    },
+    "workspaceRegionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Region of the Log Analytics workspace"
+      }
+    },
+    "regionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Region of the Azure Automation account"
+      }
+    },
+    "pricingTier": {
+      "type": "string",
+      "metadata": {
+        "description": "Pricing tier of both Log Analytics workspace and Azure Automation account"
+      }
+    },
+    "SolutionName": {
+      "type": "string",
+      "defaultValue": "Start-Stop-VM",
+      "metadata": {
+        "description": "Name of the solution"
+      }
+    },
+	"Target ResourceGroup Names": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Enter Resource Group names that contains VMs to be managed by this solution.  Seperate names by using comma(,).  Values are case-sensitive.  By default all resource groups in the subscription will be included.",
+        "category": "VM Runbook"
+      }
+    },
+    "VM Exclude List": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Enter VM names to be excluded from management operation.  Seperate names by using comma(,).  Values are case-sensitive.",
+        "category": "VM Runbook"
+      }
+    },
+    "Daily Start Time": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter time for starting VMs by resource group.  This is a recurring daily schedule.  Set a datetime that's at least thirty minutes from current time.",
+        "control": "datetime",
+        "category": "Schedule"
+      }
+    },
+    "startRunbookScheduleJobGuidValue": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter a unique GUID to enable the start schedule.",
+        "control": "guid",
+        "category": "Schedule"
+      }
+    },
+    "Daily Stop Time": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter time for stopping VMs by resource group.  This is a recurring daily schedule.  Set a datetime that's at least thirty minutes from current time.",
+        "control": "datetime",
+        "category": "Schedule"
+      }
+    },
+    "stopRunbookScheduleJobGuidValue": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter a unique GUID to enable the stop schedule",
+        "control": "guid",
+        "category": "Schedule"
+      }
+    },
+   	"bootStrapGuid": {
+      "type": "string",
+	  "metadata": {
+        "description": "Assign a GUID for the BootStrap Job schedule",
+		"control": "guid"
+      }
+    },
+    "bootStrapExecuteGuid": {
+      "type": "string",
+	  "metadata": {
+        "description": "Assign a GUID to execute the BootStrap job",
+		"control": "guid"
+      }
+    },
+	"Receive Email Notifications": {
+      "type": "string",
+      "defaultValue": "Yes",
+	  "allowedValues":[
+		"Yes",
+		"No"
+	  ],
+      "metadata": {
+        "description": "SendGrid is used to send email notifications after the runbooks are executed.Do you want to deploy SendGrid as part of this deployment? (Yes/No)",
+		"category":"Email Functionality"
+      }
+    },
+	"Email Addresses": {
+		"type":"string",
+		 "metadata": {
+			"description": "Enter the recipients of the email.  Seperate names by using comma(,).",
+			"category":"Email Functionality"
+      }
+	},
+	"sendgridPassword": {
+      "type": "string",
+	  "metadata": {
+        "description": "Send Grid Password",
+		"control": "guid"
+      }
+    }    
+  },
+  "variables": {
+     "AzureRM.Profile": {
+        "name": "AzureRm.Profile",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.2.8.0.nupkg"
+      },
+    "psModules": [
+      {
+        "name": "AzureRM.Compute",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.2.9.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Resources",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.3.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.KeyVault",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.keyvault.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Automation",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.OperationalInsights",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.operationalinsights.2.8.0.nupkg"
+      },
+      {
+        "name": "AzureRm.Insights",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.insights.2.8.0.nupkg"
+      }
+    ],
+    "runbooks": [
+      {
+        "name": "Bootstrap_Main",
+        "version": "1.0.0.0",
+        "description": "Configurates Azure Automation account for anything we can't handle in ARM",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/Bootstrap_Main.ps1')]"
+      },
+      {
+        "name": "SequencedStartStop_Parent",
+        "version": "1.0.0.0",
+        "description": "Sequenced Snooze(stop) or UnSnooze(start)",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/SequencedSnooze/SequencedStartStop_Parent.ps1')]"
+      },
+      {
+        "name": "ScheduledStartStop_Parent",
+        "version": "1.0.0.0",
+        "description": "Parallel execution of scheduled snooze actions",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/ScheduleSnooze/ScheduledStartStop_Parent.ps1')]"
+      },
+      {
+        "name": "ScheduledStartStop_Child",
+        "version": "1.0.0.0",
+        "description": "This runbook is called by the parent runbook ScheduledStartStop_Parent to start/start ARM VMs ",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/ScheduleSnooze/ScheduledStartStop_Child.ps1')]"
+      },
+	  {
+	     "name": "ScheduledStartStop_Child_Classic",
+        "version": "1.0.0.0",
+        "description": "This runbook is called by the parent runbook ScheduledStartStop_Parent to start/stop classic VMs",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/ScheduleSnooze/ScheduledStartStop_Child_Classic.ps1')]"
+      },
+      {
+        "name": "AutoStop_VM_Child",
+        "version": "1.0.0.0",
+        "description": "Runbook to stop individual ARM/Classsic VM, called by CreateAlertsForAzureRmVM",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/Snooze/AutoStop_VM_Child.ps1')]"
+      },
+      {
+        "name": "AutoStop_CreateAlert_Parent",
+        "version": "1.0.0.0",
+        "description": "Runbook to create alerts for AutoSnooze",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/Snooze/AutoStop_CreateAlert_Parent.ps1')]"
+      },
+      {
+        "name": "AutoStop_CreateAlert_Child",
+        "version": "1.0.0.0",
+        "description": "Runbook to create or disable alert for AutoSnooze",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/Snooze/AutoStop_CreateAlert_Child.ps1')]"
+      },
+      {
+        "name": "AutoStop_Disable",
+        "version": "1.0.0.0",
+        "description": "Disable the AutoSnooze",
+        "type": "PowerShell",
+        "Id": "",
+        "scriptUri": "[concat(variables('_artifactsLocation'),'/scripts/Snooze/AutoStop_Disable.ps1')]"
+      },
+    ],
+    "internalAzureSubscriptionId": {
+      "name": "Internal_AzureSubscriptionId",
+      "description": "Azure Subscription Id",
+      "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+    },
+	 "internalSendGridPassword": {
+      "name": "Internal_SendGridPassword",
+      "description": "SendGrid Password",
+      "value": "[concat('\"',parameters('sendgridPassword'),'\"')]"
+    },
+    "automationVariables": [
+      {
+        "name": "Internal_AutomationAccountName",
+        "description": "Azure Automation Account Name",
+        "value": "[concat('\"',parameters('accountName'),'\"')]"
+      },
+      {
+        "name": "Internal_ResourceGroupName",
+        "description": "Azure Automation Account resource group name",
+        "value": "[concat('\"',resourceGroup().name,'\"')]"
+      },
+      {
+        "name": "External_ExcludeVMNames",
+        "description": "Excluded VMs as comma separated list: vm1,vm2,vm3",
+        "value": "[concat('\"',parameters('VM Exclude List'),'\"')]"
+      },
+      {
+        "name": "External_ResourceGroupNames",
+        "description": "Resource groups (as comma separated) targeted for Snooze actions: rg1,rg2,rg3",
+        "value": "[concat('\"',parameters('Target ResourceGroup Names'),'\"')]"
+      },
+      {
+        "name": "External_AutoStop_Condition",
+        "description": "This is the conditional operator required for configuring the condition before triggering an alert. Possible values are [GreaterThan, GreaterThanOrEqual, LessThan, LessThanOrEqual]",
+        "value": "[concat('\"','LessThan','\"')]"
+      },
+      {
+        "name": "External_AutoStop_Description",
+        "description": "Alert to stop the VM if the CPU % exceed the threshold",
+        "value": "[concat('\"','Alert to stop the VM if the CPU % exceed the threshold','\"')]"
+      },
+      {
+        "name": "External_AutoStop_MetricName",
+        "description": "Name of the metric the Azure Alert rule is to be configured for",
+        "value": "[concat('\"','Percentage CPU','\"')]"
+      },
+      {
+        "name": "External_AutoStop_Threshold",
+        "description": "Threshold for the Azure Alert rule. Possible percentage values ranging from 1 to 100",
+        "value": "[concat('\"','5','\"')]"
+      },
+      {
+        "name": "External_AutoStop_TimeAggregationOperator",
+        "description": "The time aggregation operator which will be applied to the selected window size to evaluate the condition. Possible values are [Average, Minimum, Maximum, Total, Last]",
+        "value": "[concat('\"','Average','\"')]"
+      },
+      {
+        "name": "External_AutoStop_TimeWindow",
+        "description": "The window size over which Azure will analyze selected metric for triggering an alert. This parameter accepts input in timespan format. Possible values are from 5 mins to 6 hours.",
+        "value": "[concat('\"','06:00:00','\"')]"
+      },
+	  {
+        "name": "External_EmailToAddress",
+        "description": "Enter the recipient of the email.  Seperate names by using comma(,).",
+        "value": "[concat('\"',parameters('Email Addresses'),'\"')]"
+      },
+	  {
+        "name": "External_EmailSubject",
+        "description": "Email subject text (title).",
+        "value": "[concat('\"','VM Status Change Email','\"')]"
+      },
+	  {
+        "name": "External_IsSendEmail",
+        "description": "Boolean option to send email (True) or not send email (False).This option should be 'False' if you did not create SendGrid during the initial deployment.",
+        "value": "[concat('\"','False','\"')]"
+      },
+	  {
+        "name": "Internal_SendGridAccountName",
+        "description": "Email subject text (title).",
+        "value": "[concat('\"',parameters('accountName'),'\"')]"
+      },
+      {
+        "name": "Internal_OMSWorkspaceId",
+        "description": "OMS Log Analytics Location Id",
+        "value": "[concat('\"',variables('omsWorkspaceId'),'\"')]"
+      },
+	  {
+        "name": "Internal_BootStrapRunbookCompleted",
+        "description": "True- if the Bootstrap runbook has successfully executed as part of the deployment, False-otherwise",
+        "value": "false"
+      }
+    ],
+	
+	"StartRunbookScheduleInterval": 1,
+    "StartRunbookScheduleFrequency": "Day",
+    "StopRunbookScheduleInterval": 1,
+    "StopRunbookScheduleFrequency": "Day",
+	
+	"SolutionVersion": "1.0",
+    "SolutionPublisher": "Microsoft",
+
+    "AutomationApiVersion": "2015-10-31",
+    "LogAnalyticsApiVersion": "2015-11-01-preview",
+    "AuthorizationApiVersion": "2015-01-01",
+	
+	"SolutionViewName": "StartStopVMView",
+	"branch": "__Branch__",
+	"omsWorkspaceId": "",
+	"_artifactsLocation": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/ARO-Toolkit-Marketplace')]",
+    "StartStopVMVersion": "1.0.0.0"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-10-31",
+      "location": "[parameters('regionId')]",
+      "name": "[parameters('accountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "tags": {
+        "StartStopVMVersion": "[variables('StartStopVMVersion')]"
+      },
+      "comments": "Automation account",
+      "properties": {
+        "sku": {
+          "name": "OMS"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('accountName'), '/', variables('automationVariables')[copyIndex()].name)]",
+      "type": "Microsoft.Automation/automationAccounts/variables",
+      "apiVersion": "2015-10-31",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"
+      ],
+      "tags": {},
+      "copy": {
+        "name": "variableLoop",
+        "count": "[length(variables('automationVariables'))]"
+      },
+      "properties": {
+        "description": "[variables('automationVariables')[copyIndex()].description]",
+        "value": "[variables('automationVariables')[copyIndex()].value]"
+      }
+    },
+	{
+      "name": "[concat(parameters('accountName'), '/', variables('internalAzureSubscriptionId').name)]",
+      "type": "Microsoft.Automation/automationAccounts/variables",
+      "apiVersion": "2015-10-31",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"
+      ],
+      "tags": {},
+      "properties": {
+        "description": "[variables('internalAzureSubscriptionId').description]",
+        "isEncrypted": 1,
+        "type": "string",
+        "value": "[variables('internalAzureSubscriptionId').value]"
+      }
+    },
+	{
+      "name": "[concat(parameters('accountName'), '/', variables('internalSendGridPassword').name)]",
+      "type": "Microsoft.Automation/automationAccounts/variables",
+      "apiVersion": "2015-10-31",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"
+      ],
+      "tags": {},
+      "properties": {
+        "description": "[variables('internalSendGridPassword').description]",
+        "type": "string",
+		"isEncrypted": 1,
+        "value": "[variables('internalSendGridPassword').value]"
+      }
+    },
+    {
+      "comments": "provision the AzureRM.Profile module first since others are depenedent on it",
+      "name": "[concat(parameters('accountName'), '/', variables('AzureRM.Profile').name)]",
+      "type": "Microsoft.Automation/automationAccounts/modules",
+      "apiVersion": "2015-10-31",
+      "tags": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"
+      ],
+      "properties": {
+        "contentLink": {
+          "uri": "[variables('AzureRM.Profile').url]"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('accountName'), '/', variables('psModules')[copyIndex()].name)]",
+      "type": "Microsoft.Automation/automationAccounts/modules",
+      "apiVersion": "2015-10-31",
+      "tags": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]",
+        "[variables('AzureRM.Profile').name]"
+      ],
+      "copy": {
+        "name": "modulesLoop",
+        "count": "[length(variables('psModules'))]"
+      },
+      "properties": {
+        "contentLink": {
+          "uri": "[variables('psModules')[copyIndex()].url]"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('accountName'), '/', variables('runbooks')[copyIndex()].name)]",
+      "type": "Microsoft.Automation/automationAccounts/runbooks",
+      "apiVersion": "2015-10-31",
+      "location": "[parameters('regionId')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]",
+        "[variables('AzureRM.Profile').name]",
+        "modulesLoop"
+      ],
+      "tags": {
+        "version": "[variables('runbooks')[copyIndex()].version]"
+      },
+      "copy": {
+        "name": "runbooksLoop",
+        "count": "[length(variables('runbooks'))]"
+      },
+      "properties": {
+        "runbookType": "[variables('runbooks')[copyIndex()].type]",
+        "logProgress": "false",
+        "logVerbose": "false",
+        "description": "[variables('runbooks')[copyIndex()].description]",
+        "publishContentLink": {
+          "uri": "[variables('runbooks')[copyIndex()].scriptUri]",
+          "version": "[variables('runbooks')[copyIndex()].version]"
+        }
+      }
+    },
+	 {
+      "name": "[concat(parameters('accountName'), '/', 'Scheduled-StartVM')]",
+      "type": "microsoft.automation/automationAccounts/schedules",
+      "apiVersion": "[variables('AutomationApiVersion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"
+      ],
+      "tags": { },
+      "properties": {
+        "description": "Schedule for ScheduledSnooze runbook - start action",
+        "isEnabled": "true",
+		"startTime": "[parameters('Daily Start Time')]",
+		"interval": "[variables('StartRunbookScheduleInterval')]",
+        "frequency": "[variables('StartRunbookScheduleFrequency')]"
+      }
+    },
+	 {
+      "name": "[concat(parameters('accountName'), '/', parameters('StartRunbookScheduleJobGuidValue'))]",
+      "type": "microsoft.automation/automationAccounts/jobSchedules",
+      "apiVersion": "[variables('AutomationApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Parent')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/schedules/Scheduled-StartVM')]"
+      ],
+      "tags": { },
+      "properties": {
+        "schedule": {
+          "name": "Scheduled-StartVM"
+        },
+        "runbook": {
+          "name": "ScheduledStartStop_Parent"
+        },
+		 "parameters": {
+	     "Action": "Start"
+	   }
+      }
+    },
+	 {
+      "name": "[concat(parameters('accountName'), '/', 'Scheduled-StopVM')]",
+      "type": "microsoft.automation/automationAccounts/schedules",
+      "apiVersion": "[variables('AutomationApiVersion')]",
+      "dependsOn": [
+         "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]"
+      ],
+      "tags": { },
+      "properties": {
+        "description": "Schedule for ScheduledSnooze runbook - stop action",
+        "isEnabled": "true",
+		"startTime": "[parameters('Daily Stop Time')]",
+		"interval": "[variables('StopRunbookScheduleInterval')]",
+        "frequency": "[variables('StopRunbookScheduleFrequency')]"
+      }
+    },
+	{
+      "name": "[concat(parameters('accountName'), '/', parameters('StopRunbookScheduleJobGuidValue'))]",
+      "type": "microsoft.automation/automationAccounts/jobSchedules",
+      "apiVersion": "[variables('AutomationApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Parent')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/schedules/Scheduled-StopVM')]"
+      ],
+      "tags": { },
+      "properties": {
+        "schedule": {
+          "name": "Scheduled-StopVM"
+        },
+        "runbook": {
+          "name": "ScheduledStartStop_Parent"
+        },
+		 "parameters": {
+	     "Action": "Stop"
+	   }
+      }
+    },
+	{
+      "name": "[concat(parameters('accountName'), '/', 'startBootstrap')]",
+      "type": "Microsoft.Automation/automationAccounts/schedules",
+      "apiVersion": "2015-10-31",
+      "tags": {},
+      "properties": {
+        "description": "Starts the bootstrap runbooks",
+        "expiryTime": "9999-12-31T15:59:00-08:00",
+        "isEnabled": true,
+        "interval": null,
+        "frequency": "OneTime"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]",
+        "[variables('runbooks')[0].name]"
+      ]
+    },
+	{
+      "name": "[concat(parameters('accountName'), '/', parameters('bootStrapGuid'))]",
+      "type": "Microsoft.Automation/automationAccounts/jobSchedules",
+      "apiVersion": "2015-10-31",
+      "location": "[parameters('regionId')]",
+      "tags": {},
+      "properties": {
+        "schedule": {
+          "name": "startBootstrap"
+        },
+        "runbook": {
+          "name": "Bootstrap_Main"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]",
+        "startBootstrap",
+        "modulesLoop"
+      ]
+    },
+	{
+      "name": "[concat(parameters('SolutionName'), '[' ,parameters('workspacename'), ']')]",
+      "location": "[parameters('workspaceRegionId')]",
+      "tags": { },
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "[variables('LogAnalyticsApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/SequencedStartStop_Parent')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Parent')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Child')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Child_Classic')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/AutoStop_VM_Child')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/AutoStop_CreateAlert_Parent')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/AutoStop_CreateAlert_Child')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/AutoStop_Disable')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_AutoStop_Description')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_AutoStop_MetricName')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_AutoStop_Threshold')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_AutoStop_TimeAggregationOperator')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_AutoStop_TimeWindow')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_EmailToAddress')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_EmailSubject')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/variables/External_IsSendEmail')]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('workspacename'), '/views/', variables('SolutionViewName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[concat(resourceGroup().id, '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspacename'))]",
+        "referencedResources": [
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/SequencedStartStop_Parent')]",
+       	"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Parent')]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/runbooks/ScheduledStartStop_Child')]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/runbooks/AutoStop_VM_Child')]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/runbooks/AutoStop_CreateAlert_Parent')]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/runbooks/AutoStop_CreateAlert_Child')]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/runbooks/AutoStop_Disable')]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_AutoStop_Description')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_AutoStop_MetricName')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_AutoStop_Threshold')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_AutoStop_TimeAggregationOperator')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_AutoStop_TimeWindow')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_EmailToAddress')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_EmailSubject')]",
+        "[concat(resourceGroup().id, '/providers/Microsoft.Automation/automationAccounts/',  parameters('accountName'), '/variables/External_IsSendEmail')]"
+	    ],
+        "containedResources": [
+          "[concat(resourceGroup().id, '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspacename'), '/views/', variables('SolutionViewName'))]"
+        ]
+      },
+      "plan": {
+        "name": "[concat(parameters('SolutionName'), '[' ,parameters('workspacename'), ']')]",
+        "Version": "[variables('SolutionVersion')]",
+        "product": "VmManagementSolution",
+        "publisher": "[variables('SolutionPublisher')]",
+        "promotionCode": ""
+      }
+    },
+	{
+        "apiVersion": "[variables('LogAnalyticsApiVersion')]",
+        "name": "[concat(parameters('workspaceName') ,'/' , variables('SolutionViewName'))]",
+        "type": "Microsoft.OperationalInsights/workspaces/views",
+        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'),'/views/', variables('SolutionViewName'))]",
+        "dependson": [],
+          "properties": {
+            "Id": "[variables('SolutionViewName')]",
+            "Name": "[variables('SolutionViewName')]",
+            "DisplayName": "[variables('SolutionViewName')]",
+            "Version": 0,
+            "Dashboard": [
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Job Status",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Category=JobLogs | measure count() by ResultType",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": [ ]
+                    },
+                    "Options": {
+                      "colors": [
+                        "#00188f",
+                        "#0072c6",
+                        "#00bcf2"
+                      ],
+                      "valueColorMapping": [
+                        {
+                          "value": "Failed",
+                          "color": "#e81123"
+                        },
+                        {
+                          "value": "Started",
+                          "color": "#ec008c"
+                        },
+                        {
+                          "value": "Succeeded",
+                          "color": "#ffb900"
+                        },
+                        {
+                          "value": "Suspended",
+                          "color": "#68217a"
+                        }
+                      ]
+                    }
+                  },
+                  "List": {
+                    "Query": "Category=JobLogs | measure count() by ResultType",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "ColumnsTitle": {
+                      "Name": "Runbook Job",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "LineChartSparklineBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "Job Status History",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Final job status over time",
+                    "Subtitle": ""
+                  },
+                  "lineChart": {
+                    "query": "Category=JobLogs | measure count() by ResultType interval 1hour",
+                    "yAxis": {
+                      "isLogarithmic": false,
+                      "units": {
+                        "baseUnitType": "",
+                        "baseUnit": "",
+                        "displayUnit": ""
+                      },
+                      "customLabel": ""
+                    }
+                  },
+                  "List": {
+                    "Query": "Category=JobLogs | measure count() by ResultType interval 1hour",
+                    "HideGraph": false,
+                    "enableSparklines": true,
+                    "ColumnsTitle": {
+                      "Name": "Status",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "operation": "Summary",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "NotableQueriesBuilderBlade",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "List of queries",
+                    "newGroup": false,
+                    "preselectedFilters": "Type, Computer",
+                    "renderMode": "grid"
+                  },
+                  "queries": [
+                    {
+                      "query": "Category=JobStreams StreamType_s=Warning RunbookName_s=*Snooze*",
+                      "displayName": "Jobs with Warning Streams"
+                    },
+                    {
+                      "query": "Category=JobStreams StreamType_s=Error RunbookName_s=*Snooze*",
+                      "displayName": "Jobs with Error Streams"
+                    },
+                    {
+                      "query": "Category=JobStreams StreamType_s=Output RunbookName_s=*Snooze*",
+                      "displayName": "Jobs with Verbose Streams"
+                    }
+                  ]
+                }
+              }
+            ],
+            "OverviewTile": {
+              "Id": "SingleQueryDonutBuilderTileV1",
+              "Type": "OverviewTile",
+              "Version": 0,
+              "Configuration": {
+                "Donut": {
+                  "Query": "Category=JobLogs | measure count() by ResultType",
+                  "CenterLegend": {
+                    "Text": "Total",
+                    "Operation": "Sum",
+                    "ArcsToSelect": [ ]
+                  },
+                  "Options": {
+                    "colors": [
+                      "#ffb900",
+                      "#ec008c",
+                      "#e81123"
+                    ],
+                    "valueColorMapping": [
+                      {
+                        "value": "Failed",
+                        "color": "#e81123"
+                      },
+                      {
+                        "value": "Started",
+                        "color": "#ec008c"
+                      },
+                      {
+                        "value": "Succeeded",
+                        "color": "#ffb900"
+                      },
+                      {
+                        "value": "Suspended",
+                        "color": "#68217a"
+                      }
+                    ]
+                  }
+                },
+                "Advanced": {
+                  "DataFlowVerification": {
+                    "Enabled": true,
+                    "Query": "Category=JobLogs RunbookName_s=*Snooze*",
+                    "Message": ""
+                  }
+                }
+              }
+            }
+          }
+    },
+	{
+      "type": "Microsoft.Automation/automationAccounts/providers/diagnosticSettings",
+      "name": "[concat(parameters('accountName'), '/', 'Microsoft.Insights/service')]",
+      "dependsOn": [
+	    "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/AutoStop_VM_Child')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/SequencedStartStop_Parent')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/AutoStop_CreateAlert_Child')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Child')]",
+		"[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Child_Classic')]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('accountName'), '/runbooks/ScheduledStartStop_Parent')]"
+      ],
+      "apiVersion": "2015-07-01",
+      "properties": {
+        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+        "logs": [
+          {
+            "category": "JobLogs",
+            "enabled": true
+          },
+          {
+            "category": "JobStreams",
+            "enabled": true
+          }
+        ]
+      }
+    },
+	{
+      "name": "[concat(parameters('accountName'), '/', parameters('bootStrapExecuteGuid'))]",
+      "type": "Microsoft.Automation/automationAccounts/jobs",
+      "apiVersion": "[variables('AutomationApiVersion')]",
+      "location": "[parameters('regionId')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Automation/automationAccounts', parameters('accountName'))]",
+		"[variables('internalAzureSubscriptionId').name]",
+        "modulesLoop",
+		"runbooksLoop",
+		"variableLoop",
+		"[variables('AzureRM.Profile').name]",
+		"[variables('SolutionViewName')]",
+		"[concat(parameters('SolutionName'), '[' ,parameters('workspacename'), ']')]"
+      ],
+      "tags": { },
+      "properties": {
+        "runbook": {
+          "name": "Bootstrap_Main"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,232 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "bootStrapExecuteGuid": {
+      "type": "string",
+	  "metadata": {
+          "description": "Enter new GUID, you can generate one from Powershell using new-guid or get one from this site: <a target=new href=https://guidgenerator.com/online-guid-generator.aspx>GUID Generator</a>",
+	      "control": "guid"
+      }
+    },
+	"bootStrapGuid": {
+      "type": "string",
+	  "metadata": {
+          "description": "Enter new GUID, you can generate one from Powershell using new-guid or get one from this site: <a target=new href=https://guidgenerator.com/online-guid-generator.aspx>GUID Generator</a>",
+	      "control": "guid"
+      }
+    },
+   "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "A valid Log Analytics workspace name"
+      }
+    },
+    "accountName": {
+      "type": "string",
+      "metadata": {
+        "description": "A valid Azure Automation account name"
+      }
+    },
+    "workspaceRegionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Region of the Log Analytics workspace"
+      }
+    },
+    "regionId": {
+      "type": "string",
+      "metadata": {
+        "description": "Region of the Azure Automation account"
+      }
+    },
+    "pricingTier": {
+      "type": "string",
+      "metadata": {
+        "description": "Pricing tier of both Log Analytics workspace and Azure Automation account"
+      }
+    },
+    "SolutionName": {
+      "type": "string",
+      "defaultValue": "Start-Stop-VM",
+      "metadata": {
+        "description": "Name of the solution"
+      }
+    },
+	"Target ResourceGroup Names": {
+      "type": "string",
+      "defaultValue": "*",
+      "metadata": {
+        "description": "Enter Resource Group names that contains VMs to be managed by this solution.  Seperate names by using comma(,).  Values are case-sensitive.  By default all resource groups in the subscription will be included.",
+        "category": "VM Runbook"
+      }
+    },
+    "VM Exclude List": {
+      "type": "string",
+      "defaultValue": "none",
+      "metadata": {
+        "description": "Enter VM names to be excluded from management operation.  Seperate names by using comma(,).  Values are case-sensitive.",
+        "category": "VM Runbook"
+      }
+    },
+    "Daily Start Time": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter time for starting VMs by resource group.  This is a recurring daily schedule.  Set a datetime that's at least thirty minutes from current time.",
+        "control": "datetime",
+        "category": "Schedule"
+      }
+    },
+    "startRunbookScheduleJobGuidValue": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter a unique GUID to enable the start schedule.",
+        "control": "guid",
+        "category": "Schedule"
+      }
+    },
+    "Daily Stop Time": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter time for stopping VMs by resource group.  This is a recurring daily schedule.  Set a datetime that's at least thirty minutes from current time.",
+        "control": "datetime",
+        "category": "Schedule"
+      }
+    },
+    "stopRunbookScheduleJobGuidValue": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter a unique GUID to enable the stop schedule",
+        "control": "guid",
+        "category": "Schedule"
+      }
+    },
+    "Receive Email Notifications": {
+      "type": "string",
+      "defaultValue": "Yes",
+	  "allowedValues":[
+		"Yes",
+		"No"
+	  ],
+      "metadata": {
+        "description": "SendGrid is used to send email notifications after the runbooks are executed.Do you want to deploy SendGrid as part of this deployment? (Yes/No)",
+		"category":"Email Functionality"
+      }
+    },
+	"Email Addresses": {
+		"type":"string",
+		 "metadata": {
+			"description": "Enter the recipients of the email.  Seperate names by using comma(,).",
+			"category":"Email Functionality"
+      }
+	},
+    "sendgridPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Send Grid Password",
+		"control": "guid"
+      }	  
+    }
+  },
+  "variables": {
+     "branch": "__Branch__",
+     "_artifactsLocation": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/ARO-Toolkit-Marketplace')]",
+    "omsWorkspaceId": "",
+    "nestedTemplates": {
+          "SendGrid":"[concat(variables('_artifactsLocation'), '/nestedtemplates/SendGridDeploy.json')]",
+	      "Automation": "[concat(variables('_artifactsLocation'), '/nestedtemplates/Automation.json')]"
+
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "Automation",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').Automation]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "accountName": {
+            "value": "[parameters('accountName')]"
+          },
+          "workspaceName": {
+            "value": "[parameters('workspaceName')]"
+          },
+          "bootStrapExecuteGuid": {
+            "value": "[parameters('bootStrapExecuteGuid')]"
+          },
+          "bootStrapGuid": {
+            "value":"[parameters('bootStrapGuid')]"
+          },
+          "workspaceRegionId": {
+            "value": "[parameters('workspaceRegionId')]"
+          },
+          "regionId": {
+            "value": "[parameters('regionId')]"
+          },
+          "pricingTier": {
+            "value": "[parameters('pricingTier')]"
+          },
+          "SolutionName": {
+            "value": "[parameters('SolutionName')]"
+          },
+		  "Target ResourceGroup Names": {
+			 "value": "[parameters('Target ResourceGroup Names')]"
+          },
+         "VM Exclude List": {
+			 "value": "[parameters('VM Exclude List')]"
+         },
+         "Daily Start Time": {
+			 "value": "[parameters('Daily Start Time')]"
+         },
+        "startRunbookScheduleJobGuidValue": {
+			 "value": "[parameters('startRunbookScheduleJobGuidValue')]"
+         },
+         "Daily Stop Time": {
+			 "value": "[parameters('Daily Stop Time')]"
+          },
+        "stopRunbookScheduleJobGuidValue": {
+			 "value": "[parameters('stopRunbookScheduleJobGuidValue')]"
+         },
+		 "Receive Email Notifications" : {
+			"value": "[parameters('Receive Email Notifications')]"
+		 },
+		 "Email Addresses": {
+			"value": "[parameters('Email Addresses')]"
+		},
+		"sendgridPassword": {
+	        "value": "[parameters('sendgridPassword')]"
+        }
+	    }
+      }
+    },
+	{
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "SendGrid",
+      "condition": "[equals(parameters('Receive Email Notifications'),'Yes')]",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').SendGrid]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+		   "accountName": {
+            "value": "[parameters('accountName')]"
+           },
+           "sendgridPassword": {
+            "value": "[parameters('sendgridPassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": { }
+}

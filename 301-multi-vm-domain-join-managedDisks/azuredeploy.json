@@ -1,0 +1,485 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "AvailabilitySet": {
+      "type": "string",
+      "defaultValue": "AvSet",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name for the AvailabilitySet."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "Description": "Number of Azure VM to create."
+      }
+    },
+    "localAdminUserName": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Username for the Virtual Machine."
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Local Password for the Virtual Machine."
+      }
+    },
+    "domainJoinUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for domain joining"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Password for domain joining"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Size for the Virtual Machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OS Image Publisher. https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-cli-ps-findimage/"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": ""
+      }
+    },
+    "StorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage performance, Standard_LRS for standard skus and Premium_LRS for premium skus"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": ""
+      }
+    },
+    "DiskConfig": {
+      "type": "string",
+      "defaultValue": "Win",
+      "allowedValues": [
+        "Win",
+        "IIS",
+        "SQLStd",
+        "SQLPrem"
+      ]
+    },
+    "DiskCount": {
+      "type": "string",
+      "allowedValues": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16"
+      ],
+      "defaultValue": "1",
+      "metadata": {
+        "description": "Number of Disks for vm."
+      }
+    },
+    "DiskSize": {
+      "type": "int",
+      "defaultValue": 32,
+      "minValue": 10,
+      "maxValue": 4096,
+      "metadata": {
+        "Description": "Azure VM DiskSize of the VM"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The FQDN of the AD domain"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "CiOwner": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiOwner tag for the Virtual Machine."
+      }
+    },
+    "CiAnalystGroup": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "CiAnalystGroup tag for the Virtual Machine."
+      }
+    },
+    "appID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "appID tag for the Virtual Machine."
+      }
+    },
+    "orgID": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "",
+      "metadata": {
+        "description": "orgID tag for the Virtual Machine."
+      }
+    },
+    "env": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "Test",
+        "UAT",
+        "Lab",
+        "SvcCont",
+        "Pre-Production",
+        "Production"
+      ],
+      "metadata": {
+        "description": "environment tag for the Virtual Machine."
+      }
+    },
+    "localAdmins": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "local admins that can login to the VMs. csv list of domain\\user"
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the VirtualNetwork"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the Resource Group that contains VirtualNetwork"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name for the subnet"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Organizational Unit the VM will join"
+      }
+    },
+    "PullServerRegistrationKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The key for the Pull server the VM will join"
+      }
+    },
+    "PullServerRegistrationURI": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The pull server URI"
+      }
+    },
+    "FederalWorkspaceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Federal Workspace ID to join"
+      }
+    },
+    "FederalWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Federal Workspace key to use to join"
+      }
+    },
+    "UserWorkspaceID": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The City Workspace ID to join"
+      }
+    },
+    "UserWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The City Workspace key to use to join"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-01-01",
+
+    "branch": "develop",
+    "scriptsURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-scripts/')]",
+    "nestedURL": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/all-nested/')]",
+
+    "formatDiskstemplate": "template-DataDisks.json",
+    "createVMtemplate": "template-MultipleVM-ManagedDisks.json",
+    "configurePullTemplate": "template-ConfigureDscPull.json",
+
+    "Role": "[substring(parameters('DiskConfig'),0,3)]",
+
+    "CreateVMUrl": "[concat(variables('nestedURL'),variables('createVMtemplate'))]",
+    "FormatDisksUrl": "[concat(variables('nestedURL'),variables('formatDiskstemplate'))]",
+    "AttachVMtoPullServerURL": "[concat(variables('nestedURL'),variables('configurePullTemplate'))]",
+
+    "BuildMachineRoleURL": "[concat(variables('nestedURL'),'template-Build',variables('Role'), '.json')]",
+
+    "AzureAutomation": {
+      "Url": "https://github.com/Azure/azure-quickstart-templates/raw/master/dsc-extension-azure-automation-pullserver/UpdateLCMforAAPull.zip",
+      "RegistrationKey": "[parameters('PullServerRegistrationKey')]",
+      "registrationUrl": "[parameters('PullServerRegistrationURI')]",
+      "nodeConfigurationName": "MSITNoPAK.ISRM_GC",
+      "configurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+      "timestamp": "1/1/2015"
+    }
+  },
+    "resources": [
+      {
+          "apiVersion": "2015-01-01",
+          "name": "[concat(parameters('vmName'),'-CreateVM')]",
+          "type": "Microsoft.Resources/deployments",
+          "properties": {
+              "mode": "Incremental",
+              "templateLink": {
+                  "uri": "[variables('CreateVMUrl')]",
+                  "contentVersion": "1.0.0.0"
+              },
+            "parameters": {
+              "localAdminUserName": {
+                "value": "[parameters('localAdminUserName')]"
+              },
+              "localAdminPassword": {
+                "value": "[parameters('localAdminPassword')]"
+              },
+              "domainJoinUserName": {
+                "value": "[parameters('domainJoinUserName')]"
+              },
+              "domainJoinPassword": {
+                "value": "[parameters('domainJoinPassword')]"
+              },
+              "vmName": {
+                "value": "[parameters('vmName')]"
+              },
+              "AvailabilitySet": {
+                "value": "[parameters('AvailabilitySet')]"
+              },
+              "DiskConfig": {
+                "value": "[parameters('DiskConfig')]"
+              },
+              "vmSize": {
+                "value": "[parameters('vmSize')]"
+              },
+              "DiskCount": {
+                "value": "[parameters('DiskCount')]"
+              },
+              "DiskSize": {
+                "value": "[parameters('DiskSize')]"
+              },
+              "numberOfInstances": {
+                "value": "[parameters('numberOfInstances')]"
+              },
+              "imagePublisher": {
+                "value": "[parameters('imagePublisher')]"
+              },
+              "imageOffer": {
+                "value": "[parameters('imageOffer')]"
+              },
+              "StorageAccountType": {
+                "value": "[parameters('StorageAccountType')]"
+              },
+              "sku": {
+                "value": "[parameters('sku')]"
+              },
+              "domainName": {
+                "value": "[parameters('domainName')]"
+              },
+              "appID": {
+                "value": "[parameters('appID')]"
+              },
+              "orgID": {
+                "value": "[parameters('orgID')]"
+              },
+              "env": {
+                "value": "[parameters('env')]"
+              },
+              "localAdmins": {
+                "value": "[parameters('localAdmins')]"
+              },
+              "SQLAdmins": {
+                "value": ""
+              },
+              "virtualNetwork": {
+                "value": "[parameters('virtualNetwork')]"
+              },
+              "vnetResourceGroup": {
+                "value": "[parameters('vnetResourceGroup')]"
+              },
+              "subnetName": {
+                "value": "[parameters('subnetName')]"
+              },
+              "ouPath": {
+                "value": "[parameters('ouPath')]"
+              },
+              "FederalWorkspaceID": {
+                "value": "[parameters('federalWorkspaceID')]"
+              },
+              "federalWorkspaceKey": {
+                "value": "[parameters('federalWorkspaceKey')]"
+              },
+              "UserWorkspaceID": {
+                "value": "[parameters('UserWorkspaceID')]"
+              },
+              "UserWorkspaceKey": {
+                "value": "[parameters('UserWorkspaceKey')]"
+              }
+            }
+          }
+      },
+      {
+        "apiVersion": "2015-01-01",
+        "name": "[concat(parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]",
+        "type": "Microsoft.Resources/deployments",
+        "copy": {
+          "name": "BuildMachineRoleLoop",
+          "count": "[parameters('numberOfInstances')]"
+        },
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[variables('BuildMachineRoleURL')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "vmName": {
+              "value": "[concat(parameters('vmName'),copyindex(1))]"
+            },
+            "DiskConfig": {
+              "value": "[parameters('DiskConfig')]"
+            },
+            "vmSize": {
+              "value": "[parameters('vmSize')]"
+            },
+            "DiskCount": {
+              "value": "[parameters('DiskCount')]"
+            },
+            "DiskSize": {
+              "value": "[parameters('DiskSize')]"
+            }
+          }
+        },
+        "dependsOn": [
+          "[concat('Microsoft.Resources/deployments/',parameters('vmName'), '-CreateVM')]"
+        ]
+      },
+      {
+        "apiVersion": "2015-01-01",
+        "name": "[concat(parameters('vmName'),'-AttachVMtoPullServer',copyindex(1))]",
+        "type": "Microsoft.Resources/deployments",
+        "copy": {
+          "name": "AttachVMtoPullServerLoop",
+          "count": "[parameters('numberOfInstances')]"
+        },
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[variables('AttachVMtoPullServerURL')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "vmName": {
+              "value": "[concat(parameters('vmName'),copyindex(1))]"
+            },
+            "RegistrationKey": {
+              "value": "[variables('AzureAutomation').RegistrationKey]"
+            },
+            "registrationUrl": {
+              "value": "[variables('AzureAutomation').registrationUrl]"
+            },
+            "nodeConfigurationName": {
+              "value": "[variables('AzureAutomation').nodeConfigurationName]"
+            },
+            "timestamp": {
+              "value": "[variables('AzureAutomation').timestamp]"
+            }
+          }
+        },
+        "dependsOn": [
+          "[concat('Microsoft.Resources/deployments/',parameters('vmName'),copyindex(1),'-BuildMachineRole-',variables('Role'))]"
+        ]
+      }
+    ]
+}

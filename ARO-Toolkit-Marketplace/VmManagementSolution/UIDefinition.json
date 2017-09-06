@@ -1,0 +1,19 @@
+{
+    "$schema": "https://gallery.azure.com/schemas/2015-02-12/UIDefinition.json#",
+    "createDefinition": {
+        "createBlade": {
+            "name": "NewGallerySolutionV3Blade",
+            "extension": "Microsoft_Azure_Automation"
+        },
+        "startboardPart": {
+            "name": "SolutionPart",
+            "extension": "Microsoft_OperationsManagementSuite_Workspace"
+        },
+        "startboardPartKeyId": "id"
+    },
+    "initialData": {
+        "solutionIdentifier": "StartStopVMSolution",
+        "isCommunityGallery": true,
+        "armTemplateUrl":"https://raw.githubusercontent.com/Microsoft/MSITARM/develop/ARO-Toolkit-Marketplace/azuredeploy.json"
+    }
+}
