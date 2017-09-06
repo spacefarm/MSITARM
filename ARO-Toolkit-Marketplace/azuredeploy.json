@@ -129,7 +129,7 @@
     }
   },
   "variables": {
-     "branch": "__Branch__",
+     "branch": "develop",
      "_artifactsLocation": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/ARO-Toolkit-Marketplace')]",
     "omsWorkspaceId": "",
     "nestedTemplates": {

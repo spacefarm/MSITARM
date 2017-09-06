@@ -48,7 +48,7 @@
   },
   "variables": {
 
-    "branch": "__branch__",
+    "branch": "develop",
     "_artifactsLocation": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/ARO-toolkit')]",
      "OMSWorkspaceId": "",
     "nestedTemplates": {

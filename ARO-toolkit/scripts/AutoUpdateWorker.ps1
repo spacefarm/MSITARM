@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS  
  AutoUpdate worker Module for ARO Toolkit future releases
 .DESCRIPTION  
@@ -43,7 +43,7 @@ try
     #Local Variables
 
     $GithubRootPath = "https://raw.githubusercontent.com/Microsoft/MSITARM"
-    $GithubBranch = "__branch__"
+    $GithubBranch = "develop"
     $ScriptPath = "ARO-toolkit/nestedtemplates"
     $FileName = "Automation.json"
     $GithubFullPath = "$($GithubRootPath)/$($GithubBranch)/$($ScriptPath)/$($FileName)"

@@ -339,7 +339,7 @@
     "AuthorizationApiVersion": "2015-01-01",
 	
 	"SolutionViewName": "StartStopVMView",
-	"branch": "__Branch__",
+	"branch": "develop",
 	"omsWorkspaceId": "",
 	"_artifactsLocation": "[concat('https://raw.githubusercontent.com/Microsoft/MSITARM/',variables('branch'),'/ARO-Toolkit-Marketplace')]",
     "StartStopVMVersion": "1.0.0.0"
